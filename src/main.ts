@@ -2,6 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { enableSwagger } from './swagger';
+import { config } from 'dotenv';
+
+config();
 
 async function bootstrap() {
   const PORT: number = Number.parseInt(process.env.PORT) | 4000;
@@ -9,7 +12,7 @@ async function bootstrap() {
   enableSwagger(app);
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   await app.listen(PORT).then(() => {
-    console.log('app is listening on http://localhost:4000');
+    console.log(`app is listening on http://localhost:${PORT}`);
   });
 }
 
