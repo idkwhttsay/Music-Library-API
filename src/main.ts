@@ -5,6 +5,8 @@ import { ConfigService } from '@nestjs/config';
 import { IConfiguration } from '../infrastructure/configurations/configuration.interface';
 import { Environment } from '../infrastructure/configurations/environment';
 import { Swagger } from '../infrastructure/documentation/swagger';
+import { AppLoggingInterceptor } from '../infrastructure/logger/logger.interceptor';
+import { AppLoggerService } from '../infrastructure/logger/app-logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,6 +19,9 @@ async function bootstrap() {
     await swagger.setup();
   }
 
+  app.useGlobalInterceptors(
+    new AppLoggingInterceptor(app.get(AppLoggerService)),
+  );
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   await app.listen(PORT).then(() => {
     console.log(`app is listening on http://localhost:${PORT}`);

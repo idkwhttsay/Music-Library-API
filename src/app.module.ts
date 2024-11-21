@@ -9,7 +9,7 @@ import { EnvironmentModule } from '../infrastructure/configurations/environment.
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { config } from 'dotenv';
-import typeORMConfig from '../infrastructure/database/typeorm.config';
+import { AppLoggerModule } from '../infrastructure/logger/app-logger.module';
 
 config();
 
@@ -23,6 +23,7 @@ const domainModules = [
 
 const infrastructureModules = [
   EnvironmentModule,
+  AppLoggerModule,
   ConfigModule.forRoot({ isGlobal: true }),
   TypeOrmModule.forRoot({
     type: 'postgres',
