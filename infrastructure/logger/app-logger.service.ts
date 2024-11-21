@@ -1,37 +1,78 @@
 import { Logger } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
+import { config } from 'dotenv';
+
+config();
 
 export class AppLoggerService extends Logger {
-  private readonly _context: string;
+  private readonly logFilePath: string;
+  private readonly maxFileSizeKB: number;
+  private readonly logLevel: string;
 
-  constructor(context: string) {
+  private readonly levels = {
+    error: 0,
+    warn: 1,
+    info: 2,
+    debug: 3,
+  };
+
+  constructor() {
     super();
-    this._context = context;
+    this.logFilePath = path.join(__dirname, process.env.LOG_FILE_PATH);
+    this.maxFileSizeKB = parseInt(process.env.LOG_FILE_MAX_SIZE || '1024', 10);
+    this.logLevel = process.env.LOG_LEVEL;
   }
 
-  log(message: unknown) {
-    super.log(`[${this._context || 'App'}] ${message}`);
+  private shouldLog(level: string): boolean {
+    return this.levels[level] <= this.levels[this.logLevel];
   }
 
-  error(message: unknown, trace?: string) {
-    super.error(`[${this._context || 'App'}] ERROR: ${message}`);
-    if (trace) {
-      super.error(trace);
+  private writeLog(level: string, message: string) {
+    const timestamp = new Date().toISOString();
+    const formattedMessage = `[${timestamp}] [${level.toUpperCase()}]: ${message}\n`;
+
+    this.rotateLogFileIfNeeded();
+
+    fs.appendFileSync(this.logFilePath, formattedMessage, 'utf8');
+  }
+
+  private rotateLogFileIfNeeded() {
+    if (fs.existsSync(this.logFilePath)) {
+      const stats = fs.statSync(this.logFilePath);
+      const fileSizeKB = stats.size / 1024;
+      if (fileSizeKB >= this.maxFileSizeKB) {
+        const rotatedFilePath = `${this.logFilePath}.${Date.now()}`;
+        fs.renameSync(this.logFilePath, rotatedFilePath);
+      }
     }
   }
 
-  warn(message: unknown) {
-    super.warn(`[${this._context || 'App'}] WARN: ${message}`);
-  }
-
-  debug(message: unknown) {
-    if (process.env.NODE_ENV !== 'production') {
-      super.debug(`[${this._context || 'App'}] DEBUG: ${message}`);
+  log(message: string) {
+    super.log(message);
+    if (this.shouldLog('info')) {
+      this.writeLog('info', message);
     }
   }
 
-  verbose(message: unknown) {
-    if (process.env.NODE_ENV !== 'production') {
-      super.log(`[${this._context || 'App'}] VERBOSE: ${message}`);
+  error(message: string, trace?: string) {
+    super.error(message);
+    if (this.shouldLog('error')) {
+      this.writeLog('error', `${message} ${trace ? `Trace: ${trace}` : ''}`);
+    }
+  }
+
+  warn(message: string) {
+    super.warn(message);
+    if (this.shouldLog('warn')) {
+      this.writeLog('warn', message);
+    }
+  }
+
+  debug(message: string) {
+    super.debug(message);
+    if (this.shouldLog('debug')) {
+      this.writeLog('debug', message);
     }
   }
 }

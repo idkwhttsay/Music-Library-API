@@ -9,31 +9,27 @@ import { tap } from 'rxjs/operators';
 import { AppLoggerService } from './app-logger.service';
 
 @Injectable()
-export class AppLoggingInterceptor implements NestInterceptor {
+export class AppLoggerInterceptor implements NestInterceptor {
   constructor(private readonly logger: AppLoggerService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
-    const response = context.switchToHttp().getResponse();
+    const { method, url, query, body } = request;
 
-    const { method, url, query, params, body } = request;
-    const startTime = Date.now();
+    this.logger.log(`Incoming Request: ${method} ${url}`);
+    this.logger.debug(`Query Params: ${JSON.stringify(query)}`);
+    this.logger.debug(`Body: ${JSON.stringify(body)}`);
 
-    this.logger.log(
-      `Request Details: Method: ${method} URL: ${url} Query Params: ${JSON.stringify(
-        query,
-      )} Route Params: ${JSON.stringify(params)} Body: ${JSON.stringify(body)}`,
-    );
+    const now = Date.now();
 
     return next.handle().pipe(
-      tap((data) => {
+      tap(() => {
+        const response = context.switchToHttp().getResponse();
         const { statusCode } = response;
-        const duration = Date.now() - startTime;
+        const duration = Date.now() - now;
 
         this.logger.log(
-          `Response Details: Status Code: ${statusCode} Duration: ${duration}ms Response Body: ${JSON.stringify(
-            data,
-          )}`,
+          `Response: ${method} ${url} - Status: ${statusCode} - Duration: ${duration}ms`,
         );
       }),
     );
