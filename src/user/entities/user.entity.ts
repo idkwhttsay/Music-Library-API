@@ -33,15 +33,6 @@ export default class UserEntity {
   @ApiProperty()
   login: string;
 
-  @BeforeInsert()
-  async hashPassword(): Promise<void> {
-    this.password = await HashService.hash(this.password);
-  }
-
-  async checkPassword(password: any): Promise<boolean> {
-    return await HashService.compare(password, this.password);
-  }
-
   @Column({ name: 'password' })
   @IsString()
   @IsNotEmpty()
@@ -78,5 +69,9 @@ export default class UserEntity {
     this.password = newPassword;
     this.updatedAt = new Date();
     this.version++;
+  }
+
+  async checkPassword(password: any): Promise<boolean> {
+    return await HashService.compare(password, this.password);
   }
 }

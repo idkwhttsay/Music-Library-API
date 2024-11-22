@@ -35,7 +35,7 @@ export class UserService {
     const user: UserEntity = new UserEntity({
       id: uuid(),
       login: dto.login,
-      password: dto.password,
+      password: await HashService.hash(dto.password),
       version: 1,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -53,7 +53,9 @@ export class UserService {
       throw new NotFoundException();
     }
 
-    if (await HashService.compare(dto.oldPassword, value.password)) {
+    console.log(dto.oldPassword, value.password);
+    console.log(await HashService.compare(dto.oldPassword, value.password));
+    if (!(await HashService.compare(dto.oldPassword, value.password))) {
       throw new ForbiddenException();
     }
 
@@ -70,7 +72,7 @@ export class UserService {
     await this._userRepository.remove(value);
   }
 
-  findByLogin(login: string) {
+  findByLogin(login: string): Promise<UserEntity> {
     return this._userRepository.findOne({ where: { login } });
   }
 }
