@@ -14,9 +14,19 @@ import CreateAlbumDto from './dtos/createAlbum.dto';
 import UpdateAlbumDto from './dtos/updateAlbum.dto';
 import AlbumEntity from './entities/album.entity';
 import UUIDPipe from '../../infrastructure/pipes/uuid-validation.pipe';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { Public } from '../auth/auth.decorator';
 
+@ApiTags('Album')
 @Controller('album')
+@ApiBearerAuth()
 export class AlbumController {
   constructor(private readonly _albumService: AlbumService) {}
 

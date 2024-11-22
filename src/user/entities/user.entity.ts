@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  BeforeInsert,
   Column,
   CreateDateColumn,
   Entity,
@@ -16,6 +17,7 @@ import {
   UpdateDateColumn,
   VersionColumn,
 } from 'typeorm';
+import { HashService } from '../../../infrastructure/hashing/hash.service';
 
 @Entity({ name: 'users' })
 export default class UserEntity {
@@ -30,6 +32,15 @@ export default class UserEntity {
   @IsNotEmpty()
   @ApiProperty()
   login: string;
+
+  @BeforeInsert()
+  async hashPassword(): Promise<void> {
+    this.password = await HashService.hash(this.password);
+  }
+
+  async checkPassword(password: any): Promise<boolean> {
+    return await HashService.compare(password, this.password);
+  }
 
   @Column({ name: 'password' })
   @IsString()
@@ -63,7 +74,7 @@ export default class UserEntity {
     Object.assign(this, partial);
   }
 
-  changePassword(newPassword: string) {
+  changePassword(newPassword: string): void {
     this.password = newPassword;
     this.updatedAt = new Date();
     this.version++;

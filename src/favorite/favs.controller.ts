@@ -9,13 +9,21 @@ import {
 } from '@nestjs/common';
 import { FavsService } from './favs.service';
 import UUIDPipe from '../../infrastructure/pipes/uuid-validation.pipe';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import FavsResponseDto from './dtos/favs-response.dto';
 import FavsTrackEntity from './entities/favs-track.entity';
 import FavsArtistEntity from './entities/favs-artist.entity';
 import FavsAlbumEntity from './entities/favs-album.entity';
+import { Public } from '../auth/auth.decorator';
 
 @Controller('favs')
+@ApiBearerAuth()
 @ApiTags('Favorites')
 export class FavsController {
   constructor(private readonly _favsService: FavsService) {}

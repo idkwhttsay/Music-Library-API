@@ -15,14 +15,17 @@ import CreateArtistDto from './dtos/createArtist.dto';
 import UpdateArtistDto from './dtos/updateArtist.dto';
 import UUIDPipe from '../../infrastructure/pipes/uuid-validation.pipe';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiOperation,
   ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Public } from '../auth/auth.decorator';
 
 @Controller('artist')
+@ApiBearerAuth()
 @ApiTags('Artists')
 export class ArtistController {
   constructor(private readonly _artistService: ArtistService) {}

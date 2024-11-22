@@ -9,6 +9,7 @@ import CreateUserDto from './dtos/createUser.dto';
 import UpdatePasswordDto from './dtos/updatePassword.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { HashService } from '../../infrastructure/hashing/hash.service';
 
 @Injectable()
 export class UserService {
@@ -52,11 +53,11 @@ export class UserService {
       throw new NotFoundException();
     }
 
-    if (value.password !== dto.oldPassword) {
+    if (await HashService.compare(dto.oldPassword, value.password)) {
       throw new ForbiddenException();
     }
 
-    value.changePassword(dto.newPassword);
+    value.changePassword(await HashService.hash(dto.newPassword));
     return await this._userRepository.save(value);
   }
 
@@ -67,5 +68,9 @@ export class UserService {
     }
 
     await this._userRepository.remove(value);
+  }
+
+  findByLogin(login: string) {
+    return this._userRepository.findOne({ where: { login } });
   }
 }

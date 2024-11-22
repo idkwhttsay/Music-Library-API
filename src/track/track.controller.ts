@@ -15,15 +15,18 @@ import CreateTrackDto from './dtos/createTrack.dto';
 import UpdateTrackDto from './dtos/updateTrack.dto';
 import UUIDPipe from '../../infrastructure/pipes/uuid-validation.pipe';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiOperation,
   ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Public } from '../auth/auth.decorator';
 
 @Controller('track')
 @ApiTags('Tracks')
+@ApiBearerAuth()
 export class TrackController {
   constructor(private readonly _trackService: TrackService) {}
 

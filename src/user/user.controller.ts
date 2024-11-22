@@ -15,13 +15,16 @@ import UpdatePasswordDto from './dtos/updatePassword.dto';
 import UserEntity from './entities/user.entity';
 import UUIDPipe from '../../infrastructure/pipes/uuid-validation.pipe';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiOperation,
   ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Public } from '../auth/auth.decorator';
 
+@ApiBearerAuth()
 @Controller('user')
 @ApiTags('Users')
 export class UserController {
