@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["./infrastructure/database"],
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": false,
+    "sourceMap": false,
+    "strict": true,
+    "esModuleInterop": true,
+    "moduleResolution": "Node",
+    "incremental": false,
+    "outDir": "./dist/infrastructure/database",
+    "rootDir": "./infrastructure/database",
+    "baseUrl": "./infrastructure/database",
+  }
+}

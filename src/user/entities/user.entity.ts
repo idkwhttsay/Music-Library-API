@@ -8,36 +8,53 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import {
+  BeforeInsert,
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+  VersionColumn,
+} from 'typeorm';
+import { HashService } from '../../../infrastructure/hashing/hash.service';
 
+@Entity({ name: 'users' })
 export default class UserEntity {
+  @PrimaryGeneratedColumn('uuid')
   @IsUUID(4)
   @IsNotEmpty()
   @ApiProperty({ format: 'uuid' })
   id: string;
 
+  @Column({ name: 'login' })
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
   login: string;
 
+  @Column({ name: 'password' })
   @IsString()
   @IsNotEmpty()
   @Exclude({ toPlainOnly: true })
   @ApiProperty({ writeOnly: true })
   password: string;
 
+  @VersionColumn()
   @Min(1)
   @IsInt()
   @IsNotEmpty()
   @ApiProperty({ minimum: 1 })
   version: number;
 
+  @CreateDateColumn()
   @IsDate()
   @IsNotEmpty()
   @Transform((params) => params.value.getTime(), { toPlainOnly: true })
   @ApiProperty({ format: 'timestamp' })
   createdAt: Date;
 
+  @UpdateDateColumn()
   @IsDate()
   @IsNotEmpty()
   @Transform((params) => params.value.getTime(), { toPlainOnly: true })
@@ -48,9 +65,13 @@ export default class UserEntity {
     Object.assign(this, partial);
   }
 
-  changePassword(newPassword: string) {
+  changePassword(newPassword: string): void {
     this.password = newPassword;
     this.updatedAt = new Date();
     this.version++;
+  }
+
+  async checkPassword(password: any): Promise<boolean> {
+    return await HashService.compare(password, this.password);
   }
 }

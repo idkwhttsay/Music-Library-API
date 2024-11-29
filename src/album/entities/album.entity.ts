@@ -8,18 +8,23 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
+@Entity({ name: 'albums' })
 export default class AlbumEntity {
+  @PrimaryGeneratedColumn('uuid')
   @IsUUID(4)
   @IsNotEmpty()
   @ApiProperty({ format: 'uuid' })
   id: string; // uuid v4
 
+  @Column({ name: 'name' })
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
   name: string;
 
+  @Column({ name: 'year' })
   @IsInt()
   @IsPositive()
   @IsNotEmpty()
@@ -27,6 +32,7 @@ export default class AlbumEntity {
   @ApiProperty({ format: 'year', minimum: 1900 })
   year: number;
 
+  @Column({ name: 'artistId', nullable: true })
   @IsOptional()
   @IsString()
   @IsNotEmpty()

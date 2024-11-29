@@ -13,16 +13,19 @@ import { ArtistService } from './artist.service';
 import ArtistEntity from './entities/artist.entity';
 import CreateArtistDto from './dtos/createArtist.dto';
 import UpdateArtistDto from './dtos/updateArtist.dto';
-import UUIDPipe from '../../pipes/uuid-validation.pipe';
+import UUIDPipe from '../../infrastructure/pipes/uuid-validation.pipe';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiOperation,
   ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Public } from '../auth/auth.decorator';
 
 @Controller('artist')
+@ApiBearerAuth()
 @ApiTags('Artists')
 export class ArtistController {
   constructor(private readonly _artistService: ArtistService) {}
@@ -30,8 +33,8 @@ export class ArtistController {
   @ApiOperation({ summary: 'Get all artists' })
   @ApiResponse({ status: 200, type: [ArtistEntity] })
   @Get()
-  getAll(): ArtistEntity[] {
-    return this._artistService.getAll();
+  async getAll(): Promise<ArtistEntity[]> {
+    return await this._artistService.getAll();
   }
 
   @ApiOperation({ summary: 'Get single artist by id' })
@@ -44,8 +47,10 @@ export class ArtistController {
   @ApiResponse({ status: 400, description: 'ID has invalid format' })
   @ApiResponse({ status: 404, description: 'Artist not found' })
   @Get(':id')
-  getArtistById(@Param('id', UUIDPipe) id: string): ArtistEntity {
-    return this._artistService.getArtistById(id);
+  async getArtistById(
+    @Param('id', UUIDPipe) id: string,
+  ): Promise<ArtistEntity> {
+    return await this._artistService.getArtistById(id);
   }
 
   @Post()
@@ -60,8 +65,10 @@ export class ArtistController {
     status: 400,
     description: 'Does not contain required fields',
   })
-  createArtist(@Body() createTrackDto: CreateArtistDto): ArtistEntity {
-    return this._artistService.createArtist(createTrackDto);
+  async createArtist(
+    @Body() createTrackDto: CreateArtistDto,
+  ): Promise<ArtistEntity> {
+    return await this._artistService.createArtist(createTrackDto);
   }
 
   @ApiOperation({ summary: 'Update artist' })
@@ -75,11 +82,11 @@ export class ArtistController {
   @ApiResponse({ status: 400, description: 'ID has invalid format' })
   @ApiResponse({ status: 404, description: 'Artist not found' })
   @Put(':id')
-  updateArtist(
+  async updateArtist(
     @Param('id', UUIDPipe) id: string,
     @Body() updateTrackDto: UpdateArtistDto,
-  ): ArtistEntity {
-    return this._artistService.updateArtist(id, updateTrackDto);
+  ): Promise<ArtistEntity> {
+    return await this._artistService.updateArtist(id, updateTrackDto);
   }
 
   @ApiOperation({ summary: 'Delete artist' })
@@ -93,7 +100,7 @@ export class ArtistController {
   @ApiResponse({ status: 404, description: 'Artist not found' })
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteArtist(@Param('id', UUIDPipe) id: string): void {
-    this._artistService.deleteArtist(id);
+  async deleteArtist(@Param('id', UUIDPipe) id: string): Promise<void> {
+    await this._artistService.deleteArtist(id);
   }
 }

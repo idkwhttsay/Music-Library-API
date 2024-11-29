@@ -8,20 +8,31 @@ import {
   Post,
 } from '@nestjs/common';
 import { FavsService } from './favs.service';
-import FavsEntity from './entities/favs.entity';
-import UUIDPipe from '../../pipes/uuid-validation.pipe';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import UUIDPipe from '../../infrastructure/pipes/uuid-validation.pipe';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import FavsResponseDto from './dtos/favs-response.dto';
+import FavsTrackEntity from './entities/favs-track.entity';
+import FavsArtistEntity from './entities/favs-artist.entity';
+import FavsAlbumEntity from './entities/favs-album.entity';
+import { Public } from '../auth/auth.decorator';
 
 @Controller('favs')
+@ApiBearerAuth()
 @ApiTags('Favorites')
 export class FavsController {
   constructor(private readonly _favsService: FavsService) {}
 
   @ApiOperation({ summary: 'Get user favorites' })
-  @ApiResponse({ status: 200, type: FavsEntity })
+  @ApiResponse({ status: 200, type: FavsResponseDto })
   @Get()
-  getAll(): FavsEntity {
-    return this._favsService.getAll();
+  async getAll() {
+    return await this._favsService.getAll();
   }
 
   @ApiOperation({ summary: 'Add track to favs' })
@@ -43,8 +54,10 @@ export class FavsController {
     description: "The track doesn't exist",
   })
   @Post('track/:id')
-  addTrackToFavs(@Param('id', UUIDPipe) id: string) {
-    return this._favsService.addTrackToFavs(id);
+  async addTrackToFavs(
+    @Param('id', UUIDPipe) id: string,
+  ): Promise<FavsTrackEntity> {
+    return await this._favsService.addTrackToFavs(id);
   }
 
   @ApiOperation({ summary: 'Add artist to favs' })
@@ -66,8 +79,10 @@ export class FavsController {
     description: "The artist doesn't exist",
   })
   @Post('artist/:id')
-  addArtistToFavs(@Param('id', UUIDPipe) id: string) {
-    return this._favsService.addArtistToFavs(id);
+  async addArtistToFavs(
+    @Param('id', UUIDPipe) id: string,
+  ): Promise<FavsArtistEntity> {
+    return await this._favsService.addArtistToFavs(id);
   }
 
   @ApiOperation({ summary: 'Add album to favs' })
@@ -89,8 +104,10 @@ export class FavsController {
     description: "The album doesn't exist",
   })
   @Post('album/:id')
-  addAlbumToFavs(@Param('id', UUIDPipe) id: string) {
-    return this._favsService.addAlbumToFavs(id);
+  async addAlbumToFavs(
+    @Param('id', UUIDPipe) id: string,
+  ): Promise<FavsAlbumEntity> {
+    return await this._favsService.addAlbumToFavs(id);
   }
 
   @ApiOperation({ summary: 'Remove track from favs' })
@@ -104,8 +121,8 @@ export class FavsController {
   @ApiResponse({ status: 404, description: 'Record not found' })
   @Delete('track/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteTrackFromFavs(@Param('id', UUIDPipe) id: string) {
-    this._favsService.deleteTrackFromFavs(id);
+  async deleteTrackFromFavs(@Param('id', UUIDPipe) id: string): Promise<void> {
+    await this._favsService.deleteTrackFromFavs(id);
   }
 
   @ApiOperation({ summary: 'Remove album from favs' })
@@ -119,8 +136,8 @@ export class FavsController {
   @ApiResponse({ status: 404, description: 'Record not found' })
   @Delete('album/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteAlbumFromFavs(@Param('id', UUIDPipe) id: string) {
-    this._favsService.deleteAlbumFromFavs(id);
+  async deleteAlbumFromFavs(@Param('id', UUIDPipe) id: string): Promise<void> {
+    await this._favsService.deleteAlbumFromFavs(id);
   }
 
   @ApiOperation({ summary: 'Remove artist from favs' })
@@ -134,7 +151,7 @@ export class FavsController {
   @ApiResponse({ status: 404, description: 'Record not found' })
   @Delete('artist/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteArtistFromFavs(@Param('id', UUIDPipe) id: string) {
-    this._favsService.deleteArtistFromFavs(id);
+  async deleteArtistFromFavs(@Param('id', UUIDPipe) id: string): Promise<void> {
+    await this._favsService.deleteArtistFromFavs(id);
   }
 }

@@ -24,7 +24,7 @@
     "typeorm:prod": "node node_modules/typeorm/cli.js -d dist/infrastructure/database/migration.config.js",
     "typeorm:migrate": "npm run typeorm:prod -- migration:run",
     "typeorm:generate": "npm run typeorm:dev -- migration:generate",
-    "docker:scout": "docker scout cves d4ntatar/homelibraryservice_app && docker scout cves d4ntatar/homelibraryservice_db"
+    "docker:scout": "docker scout cves d4ntatar/homelibraryservice_app_jwt && docker scout cves d4ntatar/homelibraryservice_db_jwt"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.7",

@@ -1,5 +1,4 @@
 import {
-  Inject,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -7,87 +6,123 @@ import {
 import AlbumEntity from '../album/entities/album.entity';
 import TrackEntity from '../track/entities/track.entity';
 import ArtistEntity from '../artist/entities/artist.entity';
-import FavsEntity from './entities/favs.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import FavsTrackEntity from './entities/favs-track.entity';
+import { Repository } from 'typeorm';
+import FavsAlbumEntity from './entities/favs-album.entity';
+import FavsArtistEntity from './entities/favs-artist.entity';
 
 @Injectable()
 export class FavsService {
   constructor(
-    @Inject('FAVS_ALBUM_DB')
-    private readonly _favsAlbumDatabase: Map<string, AlbumEntity>,
-    @Inject('FAVS_ARTIST_DB')
-    private readonly _favsArtistDatabase: Map<string, ArtistEntity>,
-    @Inject('FAVS_TRACK_DB')
-    private readonly _favsTrackDatabase: Map<string, TrackEntity>,
-    @Inject('TRACK_DB')
-    private readonly _trackDatabase: Map<string, TrackEntity>,
-    @Inject('ARTIST_DB')
-    private readonly _artistDatabase: Map<string, ArtistEntity>,
-    @Inject('ALBUM_DB')
-    private readonly _albumDatabase: Map<string, AlbumEntity>,
+    @InjectRepository(FavsTrackEntity)
+    private readonly _favsTrackRepository: Repository<FavsTrackEntity>,
+    @InjectRepository(FavsAlbumEntity)
+    private readonly _favsAlbumRepository: Repository<FavsAlbumEntity>,
+    @InjectRepository(FavsArtistEntity)
+    private readonly _favsArtistRepository: Repository<FavsArtistEntity>,
+    @InjectRepository(ArtistEntity)
+    private readonly _artistRepository: Repository<ArtistEntity>,
+    @InjectRepository(TrackEntity)
+    private readonly _trackRepository: Repository<TrackEntity>,
+    @InjectRepository(AlbumEntity)
+    private readonly _albumRepository: Repository<AlbumEntity>,
   ) {}
 
-  getAll(): FavsEntity {
+  async getAll() {
+    const artistIds: FavsArtistEntity[] =
+      await this._favsArtistRepository.find();
+    const albumIds: FavsAlbumEntity[] = await this._favsAlbumRepository.find();
+    const trackIds: FavsTrackEntity[] = await this._favsTrackRepository.find();
+
+    const artists: ArtistEntity[] = [];
+    for (let i = 0; i < artistIds.length; ++i) {
+      artists.push(
+        await this._artistRepository.findOneBy({ id: artistIds[i].id }),
+      );
+    }
+
+    const albums: AlbumEntity[] = [];
+    for (let i = 0; i < albumIds.length; ++i) {
+      albums.push(
+        await this._albumRepository.findOneBy({ id: albumIds[i].id }),
+      );
+    }
+
+    const tracks: TrackEntity[] = [];
+    for (let i = 0; i < trackIds.length; ++i) {
+      tracks.push(
+        await this._trackRepository.findOneBy({ id: trackIds[i].id }),
+      );
+    }
+
     return {
-      artists: Array.from(this._favsArtistDatabase.values()),
-      albums: Array.from(this._favsAlbumDatabase.values()),
-      tracks: Array.from(this._favsTrackDatabase.values()),
-    } as FavsEntity;
+      artists: artists,
+      albums: albums,
+      tracks: tracks,
+    };
   }
 
-  addTrackToFavs(id: string): TrackEntity {
-    const value: TrackEntity = this._trackDatabase.get(id);
-    if (value === undefined) {
+  async addTrackToFavs(id: string): Promise<TrackEntity> {
+    const value: TrackEntity = await this._trackRepository.findOneBy({ id });
+    if (value === null) {
       throw new UnprocessableEntityException();
     }
 
-    this._favsTrackDatabase.set(id, value);
+    await this._favsTrackRepository.save({ id: value.id });
     return value;
   }
 
-  addAlbumToFavs(id: string): AlbumEntity {
-    const value: AlbumEntity = this._albumDatabase.get(id);
-    if (value === undefined) {
+  async addAlbumToFavs(id: string): Promise<AlbumEntity> {
+    const value: AlbumEntity = await this._albumRepository.findOneBy({ id });
+    if (value === null) {
       throw new UnprocessableEntityException();
     }
 
-    this._favsAlbumDatabase.set(id, value);
+    await this._favsAlbumRepository.save({ id: value.id });
     return value;
   }
 
-  addArtistToFavs(id: string): ArtistEntity {
-    const value: ArtistEntity = this._artistDatabase.get(id);
-    if (value === undefined) {
+  async addArtistToFavs(id: string): Promise<ArtistEntity> {
+    const value: ArtistEntity = await this._artistRepository.findOneBy({ id });
+    if (value === null) {
       throw new UnprocessableEntityException();
     }
 
-    this._favsArtistDatabase.set(id, value);
+    await this._favsArtistRepository.save({ id: value.id });
     return value;
   }
 
-  deleteTrackFromFavs(id: string) {
-    const value: TrackEntity = this._favsTrackDatabase.get(id);
-    if (value === undefined) {
+  async deleteTrackFromFavs(id: string): Promise<void> {
+    const value: FavsTrackEntity = await this._favsTrackRepository.findOneBy({
+      id,
+    });
+    if (value === null) {
       throw new NotFoundException();
     }
 
-    this._favsTrackDatabase.delete(id);
+    await this._favsTrackRepository.remove(value);
   }
 
-  deleteArtistFromFavs(id: string) {
-    const value: ArtistEntity = this._favsArtistDatabase.get(id);
-    if (value === undefined) {
+  async deleteArtistFromFavs(id: string): Promise<void> {
+    const value: FavsArtistEntity = await this._favsArtistRepository.findOneBy({
+      id,
+    });
+    if (value === null) {
       throw new NotFoundException();
     }
 
-    this._favsArtistDatabase.delete(id);
+    await this._favsArtistRepository.delete(value);
   }
 
-  deleteAlbumFromFavs(id: string) {
-    const value: AlbumEntity = this._favsAlbumDatabase.get(id);
-    if (value === undefined) {
+  async deleteAlbumFromFavs(id: string): Promise<void> {
+    const value: FavsAlbumEntity = await this._favsAlbumRepository.findOneBy({
+      id,
+    });
+    if (value === null) {
       throw new NotFoundException();
     }
 
-    this._favsAlbumDatabase.delete(id);
+    await this._favsAlbumRepository.remove(value);
   }
 }

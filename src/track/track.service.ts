@@ -1,33 +1,35 @@
 import TrackEntity from './entities/track.entity';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import CreateTrackDto from './dtos/createTrack.dto';
 import { v4 as uuid } from 'uuid';
 import UpdateTrackDto from './dtos/updateTrack.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import FavsTrackEntity from '../favorite/entities/favs-track.entity';
 
 @Injectable()
 export class TrackService {
   constructor(
-    @Inject('TRACK_DB')
-    private readonly _trackDatabase: Map<string, TrackEntity>,
-    @Inject('FAVS_TRACK_DB')
-    private readonly _favsTrackDatabase: Map<string, TrackEntity>,
+    @InjectRepository(TrackEntity)
+    private readonly _trackRepository: Repository<TrackEntity>,
+    @InjectRepository(FavsTrackEntity)
+    private readonly _favsTrackRepository: Repository<FavsTrackEntity>,
   ) {}
 
-  getAll(): TrackEntity[] {
-    return Array.from(this._trackDatabase.values());
+  async getAll(): Promise<TrackEntity[]> {
+    return await this._trackRepository.find();
   }
 
-  getTrackById(id: string): TrackEntity {
-    const value: TrackEntity = this._trackDatabase.get(id);
-
-    if (value === undefined) {
+  async getTrackById(id: string): Promise<TrackEntity> {
+    const value: TrackEntity = await this._trackRepository.findOneBy({ id });
+    if (value === null) {
       throw new NotFoundException();
     }
 
     return value;
   }
 
-  createTrack(dto: CreateTrackDto): TrackEntity {
+  async createTrack(dto: CreateTrackDto): Promise<TrackEntity> {
     const track: TrackEntity = new TrackEntity({
       id: uuid(),
       name: dto.name,
@@ -36,13 +38,12 @@ export class TrackService {
       duration: dto.duration,
     });
 
-    this._trackDatabase.set(track.id, track);
-    return track;
+    return await this._trackRepository.save(track);
   }
 
-  updateTrack(id: string, dto: UpdateTrackDto): TrackEntity {
-    const value: TrackEntity = this._trackDatabase.get(id);
-    if (value === undefined) {
+  async updateTrack(id: string, dto: UpdateTrackDto): Promise<TrackEntity> {
+    const value: TrackEntity = await this._trackRepository.findOneBy({ id });
+    if (value === null) {
       throw new NotFoundException();
     }
 
@@ -59,17 +60,16 @@ export class TrackService {
       value.duration = dto.duration;
     }
 
-    this._trackDatabase.set(id, value);
-    return value;
+    return await this._trackRepository.save(value);
   }
 
-  deleteTrack(id: string): void {
-    const value: TrackEntity = this._trackDatabase.get(id);
-    if (value === undefined) {
+  async deleteTrack(id: string): Promise<void> {
+    const value: TrackEntity = await this._trackRepository.findOneBy({ id });
+    if (value === null) {
       throw new NotFoundException();
     }
 
-    this._favsTrackDatabase.delete(id);
-    this._trackDatabase.delete(id);
+    await this._favsTrackRepository.remove({ id: value.id });
+    await this._trackRepository.remove(value);
   }
 }

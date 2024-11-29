@@ -13,15 +13,18 @@ import { UserService } from './user.service';
 import CreateUserDto from './dtos/createUser.dto';
 import UpdatePasswordDto from './dtos/updatePassword.dto';
 import UserEntity from './entities/user.entity';
-import UUIDPipe from '../../pipes/uuid-validation.pipe';
+import UUIDPipe from '../../infrastructure/pipes/uuid-validation.pipe';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiOperation,
   ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Public } from '../auth/auth.decorator';
 
+@ApiBearerAuth()
 @Controller('user')
 @ApiTags('Users')
 export class UserController {
@@ -33,8 +36,8 @@ export class UserController {
     type: [UserEntity],
   })
   @Get()
-  getAll(): UserEntity[] {
-    return this._userService.getAll();
+  async getAll(): Promise<UserEntity[]> {
+    return await this._userService.getAll();
   }
 
   @ApiOperation({ summary: 'Get single user by ID' })
@@ -56,8 +59,8 @@ export class UserController {
     description: 'Id of user',
   })
   @Get(':id')
-  getUserById(@Param('id', UUIDPipe) id: string): UserEntity {
-    return this._userService.getUserById(id);
+  async getUserById(@Param('id', UUIDPipe) id: string): Promise<UserEntity> {
+    return await this._userService.getUserById(id);
   }
 
   @ApiOperation({ summary: 'Create user' })
@@ -72,8 +75,8 @@ export class UserController {
     description: 'Does not contain required fields',
   })
   @Post()
-  createUser(@Body() createUserDto: CreateUserDto): UserEntity {
-    return this._userService.createUser(createUserDto);
+  async createUser(@Body() createUserDto: CreateUserDto): Promise<UserEntity> {
+    return await this._userService.createUser(createUserDto);
   }
 
   @ApiOperation({ summary: 'Update single user' })
@@ -87,11 +90,11 @@ export class UserController {
   @ApiResponse({ status: 400, description: 'ID has invalid format' })
   @ApiResponse({ status: 404, description: 'User not found' })
   @Put(':id')
-  updatePassword(
+  async updatePassword(
     @Param('id', UUIDPipe) id: string,
     @Body() updatePasswordDto: UpdatePasswordDto,
-  ): UserEntity {
-    return this._userService.updateUserPassword(id, updatePasswordDto);
+  ): Promise<UserEntity> {
+    return await this._userService.updateUserPassword(id, updatePasswordDto);
   }
 
   @ApiOperation({ summary: 'Delete user' })
@@ -105,7 +108,7 @@ export class UserController {
   @ApiResponse({ status: 404, description: 'User not found' })
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteUser(@Param('id', UUIDPipe) id: string): void {
-    this._userService.deleteUser(id);
+  async deleteUser(@Param('id', UUIDPipe) id: string): Promise<void> {
+    await this._userService.deleteUser(id);
   }
 }

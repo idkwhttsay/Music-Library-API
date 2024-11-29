@@ -1,66 +1,78 @@
 import UserEntity from './entities/user.entity';
 import {
   ForbiddenException,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
 import CreateUserDto from './dtos/createUser.dto';
 import UpdatePasswordDto from './dtos/updatePassword.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { HashService } from '../../infrastructure/hashing/hash.service';
 
 @Injectable()
 export class UserService {
   constructor(
-    @Inject('USER_DB') private readonly _userDatabase: Map<string, UserEntity>,
+    @InjectRepository(UserEntity)
+    private readonly _userRepository: Repository<UserEntity>,
   ) {}
 
-  getAll(): UserEntity[] {
-    return Array.from(this._userDatabase.values());
+  async getAll(): Promise<UserEntity[]> {
+    return await this._userRepository.find();
   }
 
-  getUserById(id: string): UserEntity {
-    const value: UserEntity = this._userDatabase.get(id);
-    if (value === undefined) {
+  async getUserById(id: string): Promise<UserEntity> {
+    const user: UserEntity = await this._userRepository.findOneBy({ id });
+    if (user === null) {
       throw new NotFoundException();
     }
 
-    return value;
+    return user;
   }
 
-  createUser(dto: CreateUserDto): UserEntity {
+  async createUser(dto: CreateUserDto): Promise<UserEntity> {
     const user: UserEntity = new UserEntity({
       id: uuid(),
       login: dto.login,
-      password: dto.password,
+      password: await HashService.hash(dto.password),
       version: 1,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    this._userDatabase.set(user.id, user);
-    return user;
+
+    return await this._userRepository.save(user);
   }
 
-  updateUserPassword(id: string, dto: UpdatePasswordDto): UserEntity {
-    const value: UserEntity = this._userDatabase.get(id);
-    if (value === undefined) {
+  async updateUserPassword(
+    id: string,
+    dto: UpdatePasswordDto,
+  ): Promise<UserEntity> {
+    const value: UserEntity = await this._userRepository.findOneBy({ id });
+    if (value === null) {
       throw new NotFoundException();
     }
 
-    if (value.password !== dto.oldPassword) {
+    console.log(dto.oldPassword, value.password);
+    console.log(await HashService.compare(dto.oldPassword, value.password));
+    if (!(await HashService.compare(dto.oldPassword, value.password))) {
       throw new ForbiddenException();
     }
 
-    value.changePassword(dto.newPassword);
-    return value;
+    value.changePassword(await HashService.hash(dto.newPassword));
+    return await this._userRepository.save(value);
   }
 
-  deleteUser(id: string): void {
-    const value: UserEntity = this._userDatabase.get(id);
-    if (value === undefined) {
+  async deleteUser(id: string): Promise<void> {
+    const value: UserEntity = await this._userRepository.findOneBy({ id });
+    if (value === null) {
       throw new NotFoundException();
     }
 
-    this._userDatabase.delete(id);
+    await this._userRepository.remove(value);
+  }
+
+  findByLogin(login: string): Promise<UserEntity> {
+    return this._userRepository.findOne({ where: { login } });
   }
 }
