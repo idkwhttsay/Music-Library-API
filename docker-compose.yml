@@ -1,20 +1,14 @@
-networks:
-  nestjs-postgres-network:
-    driver: bridge
-
 services:
   postgres-db:
-#    build:
-#      dockerfile: infrastructure/database/Dockerfile
-    image: d4ntatar/homelibraryservice_db_jwt
+    image: postgres:16-alpine
     restart: always
     networks:
       - nestjs-postgres-network
+    volumes:
+      - db-data:/var/lib/postgresql/data
     env_file:
       - .env
   nestjs-app:
-#    build:
-#      dockerfile: Dockerfile
     image: d4ntatar/homelibraryservice_app_jwt
     restart: always
     ports:
@@ -23,7 +17,19 @@ services:
       - POSTGRES_HOST=postgres-db
     networks:
       - nestjs-postgres-network
+    volumes:
+      - backend-logs:/app/dist/infrastructure/logger
+      - backend-migrations:/app/dist/infrastructure/database/migrations
     depends_on:
       - postgres-db
     env_file:
       - .env
+
+volumes:
+  backend-logs:
+  backend-migrations:
+  db-data:
+
+networks:
+  nestjs-postgres-network:
+    driver: bridge
