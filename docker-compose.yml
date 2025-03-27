@@ -4,6 +4,8 @@ services:
     restart: always
     networks:
       - nestjs-postgres-network
+    volumes:
+      - db-data:/var/lib/postgresql/data
     env_file:
       - .env
   nestjs-app:
@@ -26,6 +28,7 @@ services:
 volumes:
   backend-logs:
   backend-migrations:
+  db-data:
 
 networks:
   nestjs-postgres-network:
